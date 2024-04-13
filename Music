@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Ball</title>
+    <style>
+        #ball {
+            width: 50px;
+            height: 50px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: bounce 2s infinite alternate;
+        }
+
+        #line {
+            width: 100%;
+            height: 2px;
+            background-color: black;
+            position: absolute;
+            bottom: 100px; /* Adjust as needed */
+        }
+
+        @keyframes bounce {
+            0% {
+                top: 0;
+            }
+            100% {
+                top: calc(100% - 50px); /* Adjust for the ball's size */
+            }
+        }
+    </style>
+</head>
+<body>
+    <input type="file" accept="audio/*" onchange="handleFile(this.files)">
+    <div id="ball"></div>
+    <div id="line"></div>
+
+    <script>
+        function handleFile(files) {
+            const audio = new Audio();
+            audio.src = URL.createObjectURL(files[0]);
+            audio.autoplay = true;
+            audio.controls = true;
+
+            const audioContext = new AudioContext();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaElementSource(audio);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            const canvas = document.createElement('canvas');
+            document.body.appendChild(canvas);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const canvasCtx = canvas.getContext('2d');
+
+            function draw() {
+                requestAnimationFrame(draw);
+
+                analyser.getByteFrequencyData(dataArray);
+
+                const average = dataArray.reduce((acc, cur) => acc + cur, 0) / bufferLength;
+
+                const ball = document.getElementById('ball');
+                ball.style.animationDuration = `${2 + average / 100}s`;
+            }
+
+            draw();
+        }
+    </script>
+</body>
+</html>
